@@ -1,7 +1,8 @@
 // src/app/layout.tsx
 import React from 'react';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
-import { AuthProvider } from '@/contexts/AuthContext'; // Import AuthProvider
+import { AuthProvider } from '@/contexts/AuthContext';
+import ThemeConfig from '@/components/ThemeConfig';
 import './globals.css';
 
 export const metadata = {
@@ -13,8 +14,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <AuthProvider> {/* Wrap with AuthProvider */}
-          <AntdRegistry>{children}</AntdRegistry>
+        <AuthProvider>
+          <ThemeConfig>
+            <AntdRegistry>{children}</AntdRegistry>
+          </ThemeConfig>
         </AuthProvider>
       </body>
     </html>

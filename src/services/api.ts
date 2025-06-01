@@ -12,6 +12,12 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
     if (typeof window !== 'undefined') {
         const token = localStorage.getItem('authToken');
+        console.log('API Request Config:', {
+            url: config.url,
+            method: config.method,
+            headers: config.headers,
+            hasToken: !!token
+        });
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -19,9 +25,9 @@ apiClient.interceptors.request.use((config) => {
     return config;
 },
 (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
-}
-);
+});
 apiClient.interceptors.response.use(
     response => response, // Pass through successful responses
     error => {
@@ -64,8 +70,24 @@ export const getLoanApplicationsByUserId = (userId: number | string) => {
     return apiClient.get(`/applications/user/${userId}`);
 };
 export const getMyLoanApplications = () => {
-    // Backend will extract userId from the authenticated principal
-    return apiClient.get('/applications/my'); // Changed path convention
-  };
+    console.log('Making request to /applications/my');
+    return apiClient.get('/applications/my')
+        .then(response => {
+            console.log('Applications API response:', {
+                status: response.status,
+                data: response.data,
+                headers: response.headers
+            });
+            return response;
+        })
+        .catch(error => {
+            console.error('Applications API error:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
+            throw error;
+        });
+};
   
 export default apiClient;

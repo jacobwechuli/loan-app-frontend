@@ -29,33 +29,62 @@ export default function ApplicationsListPage() {
     const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
     const fetchApplications = useCallback(async () => {
+        console.log('Fetch attempt - Auth state:', { isAuthenticated, isAuthLoading });
         if (!isAuthenticated) {
+            console.log('Not authenticated, skipping fetch');
             setError("Authentication required.");
             return;
         }
         setDataLoading(true);
         setError(null);
         try {
+            console.log('Starting API request...');
             const response = await getMyLoanApplications();
-            setApplications(response.data || []);
+            console.log('Raw API Response:', response);
+            
+            // Check if response.data exists and is an array
+            if (!response.data) {
+                console.warn('Response data is undefined or null');
+                setApplications([]);
+                return;
+            }
+            
+            const applicationsData = Array.isArray(response.data) ? response.data : [];
+            console.log('Processed applications:', applicationsData);
+            
+            if (applicationsData.length === 0) {
+                console.log('No applications found in response');
+            }
+            
+            setApplications(applicationsData);
         } catch (err: any) {
             console.error("Failed to fetch applications:", err);
+            console.error("Error details:", {
+                status: err.response?.status,
+                data: err.response?.data,
+                message: err.message,
+                config: err.config
+            });
+            
             const errorMsg = err.response?.data?.message || err.message || 'Failed to load applications.';
-            if (!(err.response?.status === 401 || err.response?.status === 403)) {
-               setError(errorMsg);
+            if (err.response?.status === 401 || err.response?.status === 403) {
+                console.log("Authentication error detected");
+                setError("Your session may have expired. Please log in again.");
             } else {
-                 console.log("Authentication error likely handled by interceptor.");
-                 setError("Your session may have expired. Please log in again.");
+                setError(errorMsg);
             }
         } finally {
             setDataLoading(false);
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, isAuthLoading]);
 
     useEffect(() => {
+        console.log('Auth state changed:', { isAuthenticated, isAuthLoading });
         if (!isAuthLoading && isAuthenticated) {
+            console.log('Fetching applications due to auth state change');
             fetchApplications();
         } else if (!isAuthLoading && !isAuthenticated) {
+            console.log('Clearing applications due to not authenticated');
             setApplications([]);
         }
     }, [isAuthenticated, isAuthLoading, fetchApplications]);
